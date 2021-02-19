@@ -113,8 +113,15 @@ class BasePracticeApplicationTests {
     /**
      * 嵌套级别事务。该传播级别特征是，如果上下文中存在事务，则嵌套事务执行，如果不存在事务，则新建事务。
      */
+    @Test
     void testPropagationNested(){
-        transactionService.testPropagationNested();
+        try {
+            transactionService.testPropagationNested();
+        } catch (Exception e) {
+        }
+        Assert.isTrue(customerRepository.findByFirstName("Vivi").size() > 0, "事务回滚,Vivi保存失败");
+        Assert.isTrue(customerRepository.findByFirstName("Tim").size() == 0, "事务回滚,Tim保存失败");
+
     }
 
 }

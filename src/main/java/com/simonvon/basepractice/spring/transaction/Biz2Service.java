@@ -33,6 +33,18 @@ public class Biz2Service {
     }
 
 
+    @Transactional(propagation = Propagation.NESTED)
+    public void txNestedSuccess(){
+        customerRepository.save(new Customer("Tim", "von"));
+    }
+
+
+    @Transactional(propagation = Propagation.NESTED)
+    public void txNestedError(){
+        customerRepository.save(new Customer("Tim", "von"));
+        throw new RuntimeException();
+    }
+
     @Transactional(propagation = Propagation.NEVER)
     public void txNever(){
         customerRepository.save(new Customer("Tim", "von"));
@@ -42,8 +54,7 @@ public class Biz2Service {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void txRequiresNewError(){
         customerRepository.save(new Customer("Simon", "von"));
-        Integer a = null;
-        a.toString();
+        throw new RuntimeException();
     }
 
 

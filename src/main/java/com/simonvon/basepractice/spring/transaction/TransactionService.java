@@ -75,9 +75,15 @@ public class TransactionService {
     }
 
 
-    @Transactional(propagation = Propagation.NESTED)
+    @Transactional(propagation = Propagation.REQUIRED)
     public void testPropagationNested() {
         customerRepository.save(new Customer("Vivi", "von"));
-        biz2Service.txRequiresNewError();
+//        biz2Service.txNestedSuccess();
+        try {
+            biz2Service.txNestedError();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+//        throw new RuntimeException();
     }
 }
