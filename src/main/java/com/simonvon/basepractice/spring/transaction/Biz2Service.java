@@ -29,7 +29,7 @@ public class Biz2Service {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void txRequiresNewSuccess(){
-        customerRepository.save(new Customer("Tim", "von"));
+        customerRepository.save(new Customer("Simon", "von"));
     }
 
 

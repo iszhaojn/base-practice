@@ -12,9 +12,11 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.IllegalTransactionStateException;
 import org.springframework.util.Assert;
 
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+
 @SpringBootTest
 @RunWith(SpringRunner.class)
-@ComponentScan(basePackages = {"com.simonvon"})
 class BasePracticeApplicationTests {
 
     @Autowired
@@ -66,20 +68,6 @@ class BasePracticeApplicationTests {
         Assert.isTrue(exception instanceof IllegalTransactionStateException, "上下文中必须要存在事务");
     }
 
-    /**
-     * 该传播级别的特点是，每次都会新建一个事务，并且同时将上下文中的事务挂起，执行当前新建事务完成以后，上下文事务恢复再执行
-     * 外层事务A为Required,内层事务B为Require_New,A内部调用事务B,内层B事务失败回滚,外层A事务执行成功
-     */
-    @Test
-    void testPropagationRequiresNew() {
-        try {
-            transactionService.txRequiredInCloudRequiresNew();
-        } catch (Exception e) {
-
-        }
-        Assert.isTrue(customerRepository.findByFirstName("Tim").size() > 0, "外层事务成功");
-        Assert.isTrue(customerRepository.findByFirstName("Simon").size() == 0, "内层事务失败");
-    }
 
     /**
      * 该传播属性不支持事务，该级别的特点就是上下文中存在事务，则挂起事务，执行当前逻辑，结束后恢复上下文的事务
@@ -110,8 +98,40 @@ class BasePracticeApplicationTests {
         Assert.isTrue(exception instanceof IllegalTransactionStateException,"该方法上下文不能包含事务");
     }
 
+
+    /**
+     * 该传播级别的特点是，每次都会新建一个事务，并且同时将上下文中的事务挂起，执行当前新建事务完成以后，上下文事务恢复再执行
+     * 外层事务A为Required,内层事务B为Require_New,A内部调用事务B,内层B事务失败回滚,外层A事务执行成功
+     */
+    @Test
+    void testPropagationRequiresNew() {
+        try {
+            transactionService.txRequiredInCloudRequiresNew();
+        } catch (Exception e) {
+
+        }
+        Assert.isTrue(customerRepository.findByFirstName("Tim").size() > 0, "外层事务成功");
+        Assert.isTrue(customerRepository.findByFirstName("Simon").size() == 0, "内层事务失败");
+    }
+
+    /**
+     * RequiresNew和Nested的区别就是,当外层事务回滚的时候,内部事务RequiresNew是独立新事务,不会回滚;Nested是嵌套事务,外部回滚,内部事务也回滚
+     */
+    @Test
+    void testPropagationRequiresNew2() {
+        try {
+            transactionService.txRequiredInCloudRequiresNew2();
+        } catch (Exception e) {
+        }
+        Assert.isTrue(customerRepository.findByFirstName("Tim").size() == 0, "外层事务回滚,Tim保存失败");
+        Assert.isTrue(customerRepository.findByFirstName("Simon").size() > 0, "内层事务提交成功,Simon保存成功");
+    }
+
+
     /**
      * 嵌套级别事务。该传播级别特征是，如果上下文中存在事务，则嵌套事务执行，如果不存在事务，则新建事务。
+     * PROPAGATION_REQUIRES_NEW 启动一个新的, 不依赖于环境的 "内部" 事务. 这个事务将被完全 commited 或 rolled back 而不依赖于外部事务, 它拥有自己的隔离范围, 自己的锁, 等等. 当内部事务开始执行时, 外部事务将被挂起, 内务事务结束时, 外部事务将继续执行.
+     * 另一方面, PROPAGATION_NESTED 开始一个 "嵌套的" 事务,  它是已经存在事务的一个真正的子事务. 潜套事务开始执行时,  它将取得一个 savepoint. 如果这个嵌套事务失败, 我们将回滚到此 savepoint. 潜套事务是外部事务的一部分, 只有外部事务结束后它才会被提交.
      */
     @Test
     void testPropagationNested(){
@@ -119,9 +139,18 @@ class BasePracticeApplicationTests {
             transactionService.testPropagationNested();
         } catch (Exception e) {
         }
-        Assert.isTrue(customerRepository.findByFirstName("Vivi").size() > 0, "事务回滚,Vivi保存失败");
-        Assert.isTrue(customerRepository.findByFirstName("Tim").size() == 0, "事务回滚,Tim保存失败");
+        Assert.isTrue(customerRepository.findByFirstName("Vivi").size() > 0, "外层事务提交,Vivi保存成功");
+        Assert.isTrue(customerRepository.findByFirstName("Tim").size() == 0, "内层事务回滚,Tim保存失败");
+    }
 
+    @Test
+    void testPropagationNested2(){
+        try {
+            transactionService.testPropagationNested2();
+        } catch (Exception e) {
+        }
+        Assert.isTrue(customerRepository.findByFirstName("Vivi").size() == 0, "外层事务回滚,Vivi保存失败");
+        Assert.isTrue(customerRepository.findByFirstName("Tim").size() == 0, "内层事务回滚,Tim保存失败");
     }
 
 }

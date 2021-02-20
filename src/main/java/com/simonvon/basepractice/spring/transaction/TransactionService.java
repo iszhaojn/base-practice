@@ -55,6 +55,13 @@ public class TransactionService {
         biz2Service.txRequiresNewError();
     }
 
+    @Transactional(propagation = Propagation.REQUIRED)
+    public void txRequiredInCloudRequiresNew2() {
+        customerRepository.save(new Customer("Tim", "von"));
+        biz2Service.txRequiresNewSuccess();
+        throw new RuntimeException();
+    }
+
     /**
      * 该传播级别的特点是，每次都会新建一个事务，并且同时将上下文中的事务挂起，执行当前新建事务完成以后，上下文事务恢复再执行
      */
@@ -78,12 +85,18 @@ public class TransactionService {
     @Transactional(propagation = Propagation.REQUIRED)
     public void testPropagationNested() {
         customerRepository.save(new Customer("Vivi", "von"));
-//        biz2Service.txNestedSuccess();
         try {
             biz2Service.txNestedError();
         } catch (Exception e) {
             e.printStackTrace();
         }
-//        throw new RuntimeException();
+    }
+
+
+    @Transactional(propagation = Propagation.REQUIRED)
+    public void testPropagationNested2() {
+        customerRepository.save(new Customer("Vivi", "von"));
+        biz2Service.txNestedSuccess();
+        throw new RuntimeException();
     }
 }
