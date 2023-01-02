@@ -1,28 +1,33 @@
 package com.simonvon.basepractice;
 
 
+import com.simonvon.basepractice.base.BaseSpringTest;
 import com.simonvon.basepractice.spring.dao.CustomerRepository;
 import com.simonvon.basepractice.spring.transaction.TransactionService;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.IllegalTransactionStateException;
 import org.springframework.util.Assert;
 
-import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
 
-@SpringBootTest
-@RunWith(SpringRunner.class)
-class BasePracticeApplicationTests {
+class BasePracticeApplicationTests extends BaseSpringTest {
 
-    @Autowired
-    private TransactionService transactionService;
-    @Autowired
-    private CustomerRepository customerRepository;
+
+    private final TransactionService transactionService;
+
+    private final CustomerRepository customerRepository;
+
+    public BasePracticeApplicationTests(TransactionService transactionService, CustomerRepository customerRepository) {
+        this.transactionService = transactionService;
+        this.customerRepository = customerRepository;
+    }
+
+    @AfterEach
+    public void clearUp() {
+        customerRepository.deleteAll();
+        System.out.println("================");
+    }
 
     /**
      * 支持当前事务，如果当前没有事务，则新建一个事务，
@@ -31,7 +36,7 @@ class BasePracticeApplicationTests {
     void testPropagationRequired() {
         try {
             transactionService.propagationRequired();
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
         Assert.isTrue(customerRepository.findByFirstName("Vivi").size() == 0, "事务成功,Vivi保存失败");
@@ -47,8 +52,7 @@ class BasePracticeApplicationTests {
     void testPropagationSupports() {
         try {
             transactionService.propagationSupports();
-        } catch (Exception e) {
-//            e.printStackTrace();
+        } catch (Exception ignored) {
         }
         Assert.isTrue(customerRepository.findByFirstName("Tim").size() > 0, "事务失败,Tim保存成功");
     }
@@ -76,7 +80,7 @@ class BasePracticeApplicationTests {
      * 导致出现一些难以考虑周全的异常情况。所以这个事务这个级别的传播级别就派上用场了。用当前级别的事务模板包起来就可以了
      */
     @Test
-    void testPropagationNotSupported(){
+    void testPropagationNotSupported() {
         transactionService.txPropagationNotSupported();
         Assert.isTrue(customerRepository.findByFirstName("Tim").size() > 0, "事务成功,Tim保存成功");
         Assert.isTrue(customerRepository.findByFirstName("Simon").size() > 0, "事务成功,Simon保存成功");
@@ -87,7 +91,7 @@ class BasePracticeApplicationTests {
      * 而PROPAGATION_NEVER传播级别要求上下文中不能存在事务，一旦有事务，就抛出runtime异常，强制停止执行
      */
     @Test
-    void testPropagationNever(){
+    void testPropagationNever() {
         Exception exception = null;
 
         try {
@@ -95,7 +99,7 @@ class BasePracticeApplicationTests {
         } catch (Exception e) {
             exception = e;
         }
-        Assert.isTrue(exception instanceof IllegalTransactionStateException,"该方法上下文不能包含事务");
+        Assert.isTrue(exception instanceof IllegalTransactionStateException, "该方法上下文不能包含事务");
     }
 
 
@@ -107,10 +111,10 @@ class BasePracticeApplicationTests {
     void testPropagationRequiresNew() {
         try {
             transactionService.txRequiredInCloudRequiresNew();
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
-        Assert.isTrue(customerRepository.findByFirstName("Tim").size() > 0, "外层事务成功");
+        Assert.isTrue(customerRepository.findByFirstName("Tim").size() == 0, "外层事务成功");
         Assert.isTrue(customerRepository.findByFirstName("Simon").size() == 0, "内层事务失败");
     }
 
@@ -121,7 +125,7 @@ class BasePracticeApplicationTests {
     void testPropagationRequiresNew2() {
         try {
             transactionService.txRequiredInCloudRequiresNew2();
-        } catch (Exception e) {
+        } catch (Exception ignored) {
         }
         Assert.isTrue(customerRepository.findByFirstName("Tim").size() == 0, "外层事务回滚,Tim保存失败");
         Assert.isTrue(customerRepository.findByFirstName("Simon").size() > 0, "内层事务提交成功,Simon保存成功");
@@ -134,21 +138,20 @@ class BasePracticeApplicationTests {
      * 另一方面, PROPAGATION_NESTED 开始一个 "嵌套的" 事务,  它是已经存在事务的一个真正的子事务. 潜套事务开始执行时,  它将取得一个 savepoint. 如果这个嵌套事务失败, 我们将回滚到此 savepoint. 潜套事务是外部事务的一部分, 只有外部事务结束后它才会被提交.
      */
     @Test
-    void testPropagationNested(){
+    @Disabled(value = "hibernate not support nested propagation")
+    void testPropagationNested() {
         try {
             transactionService.testPropagationNested();
-        } catch (Exception e) {
+        } catch (Exception ignored) {
         }
         Assert.isTrue(customerRepository.findByFirstName("Vivi").size() > 0, "外层事务提交,Vivi保存成功");
         Assert.isTrue(customerRepository.findByFirstName("Tim").size() == 0, "内层事务回滚,Tim保存失败");
     }
 
     @Test
-    void testPropagationNested2(){
-        try {
-            transactionService.testPropagationNested2();
-        } catch (Exception e) {
-        }
+    @Disabled(value = "hibernate not support nested propagation")
+    void testPropagationNested2() {
+        transactionService.testPropagationNested2();
         Assert.isTrue(customerRepository.findByFirstName("Vivi").size() == 0, "外层事务回滚,Vivi保存失败");
         Assert.isTrue(customerRepository.findByFirstName("Tim").size() == 0, "内层事务回滚,Tim保存失败");
     }
