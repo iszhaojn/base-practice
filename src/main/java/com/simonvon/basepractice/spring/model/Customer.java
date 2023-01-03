@@ -27,6 +27,9 @@ public class Customer {
                 id, firstName, lastName);
     }
 
+    public Customer() {
+    }
+
     public Long getId() {
         return id;
     }

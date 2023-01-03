@@ -7,6 +7,7 @@ import com.simonvon.basepractice.spring.transaction.TransactionService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.IllegalTransactionStateException;
 import org.springframework.util.Assert;
 
@@ -14,14 +15,11 @@ import org.springframework.util.Assert;
 class BasePracticeApplicationTests extends BaseSpringTest {
 
 
-    private final TransactionService transactionService;
+    @Autowired
+    private TransactionService transactionService;
+    @Autowired
+    private CustomerRepository customerRepository;
 
-    private final CustomerRepository customerRepository;
-
-    public BasePracticeApplicationTests(TransactionService transactionService, CustomerRepository customerRepository) {
-        this.transactionService = transactionService;
-        this.customerRepository = customerRepository;
-    }
 
     @AfterEach
     public void clearUp() {

@@ -7,16 +7,15 @@ import com.simonvon.basepractice.base.BaseSpringTest;
 import com.simonvon.basepractice.spring.transaction.Biz1Service;
 import org.junit.Assert;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.function.Supplier;
 
 public class HystrixDemoTest extends BaseSpringTest {
 
-    private final Biz1Service biz1Service;
+    @Autowired
+    private Biz1Service biz1Service;
 
-    public HystrixDemoTest(Biz1Service biz1Service) {
-        this.biz1Service = biz1Service;
-    }
 
     @Test
     public void testMe() {
